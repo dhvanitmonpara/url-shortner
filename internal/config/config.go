@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/ilyakaznacheev/cleanenv"
+	"github.com/joho/godotenv"
 )
 
 type HttpServer struct {
@@ -18,22 +19,27 @@ type Config struct {
 	HttpServer  `yaml:"http_server"`
 }
 
-func MustLoad() *Config {
-
-	var configPath string
-
-	configPath = os.Getenv("CONFIG_PATH")
-
-	if configPath == "" {
-		flags := flag.String("config", "", "path to the config file")
-		flag.Parse()
-
-		configPath = *flags
-
-		if configPath == "" {
-			log.Fatal("Config path is not set")
-		}
+func resolveConfigPath(explicitPath string) string {
+	if explicitPath != "" {
+		return explicitPath
 	}
+
+	if path := os.Getenv("CONFIG_PATH"); path != "" {
+		return path
+	}
+
+	return "config/local.yml"
+}
+
+func MustLoad() *Config {
+	if err := godotenv.Load(); err != nil {
+		log.Printf("warning: could not load .env file: %v", err)
+	}
+
+	flags := flag.String("config", "", "path to the config file")
+	flag.Parse()
+
+	configPath := resolveConfigPath(*flags)
 
 	if _, err := os.Stat(configPath); os.IsNotExist(err) {
 		log.Fatalf("config file does not exist: %s", configPath)
