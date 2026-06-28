@@ -6,6 +6,7 @@ import (
 	"io"
 	"log/slog"
 	"net/http"
+	"strings"
 	"url-shortner/internal/storage"
 	"url-shortner/internal/types"
 	"url-shortner/internal/utils/response"
@@ -93,9 +94,16 @@ func RedirectHandler(storage storage.Storage) http.HandlerFunc {
 			return
 		}
 
-		fmt.Println("redirecting to", url.RedirectTO)
+		targetURL := url.RedirectTO
 
-		http.Redirect(w, r, url.RedirectTO, http.StatusFound)
+		// If it doesn't start with http:// or https://, prepend https://
+		if !strings.HasPrefix(targetURL, "http://") && !strings.HasPrefix(targetURL, "https://") {
+			targetURL = "https://" + targetURL
+		}
+
+		fmt.Println("redirecting to", targetURL)
+
+		http.Redirect(w, r, targetURL, http.StatusPermanentRedirect)
 	}
 }
 
