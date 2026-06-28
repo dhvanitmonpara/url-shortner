@@ -70,7 +70,7 @@ func GetList(storage storage.Storage) http.HandlerFunc {
 
 		url, err := storage.GetURLs()
 		if err != nil {
-			response.WriteJson(w, http.StatusInternalServerError, err)
+			response.WriteJson(w, http.StatusInternalServerError, err.Error())
 			return
 		}
 
@@ -82,12 +82,51 @@ func RedirectHandler(storage storage.Storage) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		id := r.PathValue("id")
 
-		url, err := storage.GetOriginalURLById(id)
-		if err != nil {
-			response.WriteJson(w, http.StatusNotFound, err)
+		if id == "favicon.ico" {
+			w.WriteHeader(http.StatusNoContent)
 			return
 		}
 
+		url, err := storage.GetOriginalURLById(id)
+		if err != nil {
+			response.WriteJson(w, http.StatusNotFound, err.Error())
+			return
+		}
+
+		fmt.Println("redirecting to", url.RedirectTO)
+
 		http.Redirect(w, r, url.RedirectTO, http.StatusFound)
+	}
+}
+
+func UpdateUrl(storage storage.Storage) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		id := r.PathValue("id")
+
+		var url types.URL
+
+		err := json.NewDecoder(r.Body).Decode(&url)
+		if errors.Is(err, io.EOF) {
+			response.WriteJson(w, http.StatusBadRequest, response.GeneralError(fmt.Errorf("request body is empty")))
+			return
+		}
+
+		if err != nil {
+			response.WriteJson(w, http.StatusBadRequest, response.GeneralError(err))
+			return
+		}
+
+		if err := validator.New().Struct(url); err != nil {
+			response.WriteJson(w, http.StatusBadRequest, response.ValidationError(err.(validator.ValidationErrors)))
+			return
+		}
+
+		updatedUrl, err := storage.UpdateUrl(id, url.RedirectTO)
+		if err != nil {
+			response.WriteJson(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+
+		response.WriteJson(w, http.StatusOK, updatedUrl)
 	}
 }

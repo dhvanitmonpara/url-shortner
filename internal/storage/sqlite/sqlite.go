@@ -72,7 +72,7 @@ func (s *Sqlite) GetOriginalURLById(id string) (types.URL, error) {
 
 	var url types.URL
 
-	fmt.Print("fetching url with id:", id)
+	fmt.Println("fetching url with id:", id)
 
 	err = stmt.QueryRow(id).Scan(&url.Id, &url.RedirectTO, &url.CreatedAt)
 	if err != nil {
@@ -114,4 +114,25 @@ func (s *Sqlite) GetURLs() ([]types.URL, error) {
 	}
 
 	return urls, nil
+}
+
+func (s *Sqlite) UpdateUrl(id string, redirectTO string) (types.URL, error) {
+	stmt, err := s.Db.Prepare("UPDATE urls SET redirect_to = ? WHERE id = ?")
+	if err != nil {
+		return types.URL{}, err
+	}
+
+	defer stmt.Close()
+
+	var url types.URL
+
+	err = stmt.QueryRow(redirectTO, id).Scan(&url.Id, &url.RedirectTO, &url.CreatedAt)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return types.URL{}, fmt.Errorf("no url found with id %s", fmt.Sprint(id))
+		}
+		return types.URL{}, fmt.Errorf("query error: %w", err)
+	}
+
+	return url, nil
 }
