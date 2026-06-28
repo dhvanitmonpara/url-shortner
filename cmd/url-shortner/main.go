@@ -30,7 +30,7 @@ func main() {
 	router.HandleFunc("POST /api/shorten", shorten.New(storage))
 	router.HandleFunc("GET /api/shorten", shorten.GetList(storage))
 	router.HandleFunc("GET /api/shorten/id/{id}", shorten.GetById(storage))
-	router.HandleFunc("GET /api/shorten/redirect", shorten.GetByShortenUrl(storage))
+	router.HandleFunc("GET /{id}", shorten.RedirectHandler(storage))
 
 	server := http.Server{
 		Addr:    cfg.HttpServer.Addr,

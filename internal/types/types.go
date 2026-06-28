@@ -1,8 +1,7 @@
 package types
 
 type URL struct {
-	Id          int64  `json:"id"`
-	OriginalURL string `json:"original_url" validate:"required"`
-	ShortenURL  string `json:"shorten_url" validate:"required"`
-	CreatedAt   int    `json:"created_at" validate:"required"`
+	Id         string `json:"id,omitempty"`
+	RedirectTO string `json:"redirect_to" validate:"required"`
+	CreatedAt  int    `json:"created_at,omitempty"`
 }

@@ -6,7 +6,6 @@ import (
 	"io"
 	"log/slog"
 	"net/http"
-	"strconv"
 	"url-shortner/internal/storage"
 	"url-shortner/internal/types"
 	"url-shortner/internal/utils/response"
@@ -39,10 +38,7 @@ func New(storage storage.Storage) http.HandlerFunc {
 			return
 		}
 
-		lastId, err := storage.CreateURL(
-			url.OriginalURL,
-			url.ShortenURL,
-		)
+		lastId, err := storage.CreateURL(url.RedirectTO)
 
 		if err != nil {
 			response.WriteJson(w, http.StatusInternalServerError, err)
@@ -57,32 +53,10 @@ func GetById(storage storage.Storage) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		id := r.PathValue("id")
 
-		intId, err := strconv.ParseInt(id, 10, 64)
-		if err != nil {
-			response.WriteJson(w, http.StatusBadRequest, response.GeneralError(err))
-			return
-		}
-
-		url, err := storage.GetOriginalURLById(intId)
+		url, err := storage.GetOriginalURLById(id)
 
 		if err != nil {
 			slog.Error("error getting url", slog.String("id", id))
-			response.WriteJson(w, http.StatusInternalServerError, response.GeneralError(err))
-			return
-		}
-
-		response.WriteJson(w, http.StatusOK, url)
-	}
-}
-
-func GetByShortenUrl(storage storage.Storage) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		shortenUrl := r.PathValue("shorten_url")
-
-		url, err := storage.GetOriginalURLByShortenURL(shortenUrl)
-
-		if err != nil {
-			slog.Error("error getting url", slog.String("id", shortenUrl))
 			response.WriteJson(w, http.StatusInternalServerError, response.GeneralError(err))
 			return
 		}
@@ -101,5 +75,19 @@ func GetList(storage storage.Storage) http.HandlerFunc {
 		}
 
 		response.WriteJson(w, http.StatusOK, url)
+	}
+}
+
+func RedirectHandler(storage storage.Storage) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		id := r.PathValue("id")
+
+		url, err := storage.GetOriginalURLById(id)
+		if err != nil {
+			response.WriteJson(w, http.StatusNotFound, err)
+			return
+		}
+
+		http.Redirect(w, r, url.RedirectTO, http.StatusFound)
 	}
 }
