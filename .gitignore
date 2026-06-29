@@ -2,3 +2,5 @@
 /config/production.yml
 .env
 .gocache
+
+*.exe
