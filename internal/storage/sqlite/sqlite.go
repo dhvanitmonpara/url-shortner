@@ -136,3 +136,27 @@ func (s *Sqlite) UpdateUrl(id string, redirectTO string) (types.URL, error) {
 
 	return url, nil
 }
+
+func (s *Sqlite) DeleteURL(id string) error {
+	stmt, err := s.Db.Prepare("DELETE FROM urls WHERE id = ?")
+	if err != nil {
+		return err
+	}
+	defer stmt.Close()
+
+	result, err := stmt.Exec(id)
+	if err != nil {
+		return fmt.Errorf("delete error: %w", err)
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	if rowsAffected == 0 {
+		return fmt.Errorf("no url found with id %s", fmt.Sprint(id))
+	}
+
+	return nil
+}
