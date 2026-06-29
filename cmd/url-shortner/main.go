@@ -61,8 +61,12 @@ func runServer(storage storage.Storage, cfg config.Config) {
 }
 
 func main() {
+	configPath := flag.String("config", "", "path to the config file")
+	runAsServer := flag.Bool("server", false, "run app as server")
+	runAsServerShort := flag.Bool("s", false, "run app as server")
+	flag.Parse()
 
-	cfg := config.MustLoad()
+	cfg := config.MustLoad(*configPath)
 
 	storage, err := sqlite.New(cfg)
 	if err != nil {
@@ -70,9 +74,6 @@ func main() {
 	}
 
 	slog.Info("storage initialized", slog.String("env", cfg.Env), slog.String("version", "1.0.0"))
-
-	runAsServer := flag.Bool("server", false, "run app as server")
-	runAsServerShort := flag.Bool("s", false, "run app as server")
 
 	if *runAsServer || *runAsServerShort {
 		runServer(storage, *cfg)

@@ -1,7 +1,6 @@
 package config
 
 import (
-	"flag"
 	"log"
 	"os"
 
@@ -31,15 +30,12 @@ func resolveConfigPath(explicitPath string) string {
 	return "config/local.yml"
 }
 
-func MustLoad() *Config {
+func MustLoad(configPath string) *Config {
 	if err := godotenv.Load(); err != nil {
 		log.Printf("warning: could not load .env file: %v", err)
 	}
 
-	flags := flag.String("config", "", "path to the config file")
-	flag.Parse()
-
-	configPath := resolveConfigPath(*flags)
+	configPath = resolveConfigPath(configPath)
 
 	if _, err := os.Stat(configPath); os.IsNotExist(err) {
 		log.Fatalf("config file does not exist: %s", configPath)
