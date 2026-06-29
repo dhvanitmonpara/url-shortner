@@ -138,3 +138,16 @@ func UpdateUrl(storage storage.Storage) http.HandlerFunc {
 		response.WriteJson(w, http.StatusOK, updatedUrl)
 	}
 }
+
+func DeleteUrl(storage storage.Storage) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		id := r.PathValue("id")
+
+		if err := storage.DeleteURL(id); err != nil {
+			response.WriteJson(w, http.StatusNotFound, response.GeneralError(err))
+			return
+		}
+
+		w.WriteHeader(http.StatusNoContent)
+	}
+}
